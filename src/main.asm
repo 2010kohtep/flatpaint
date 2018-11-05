@@ -1,6 +1,6 @@
 ; »нтересные факты
 ;
-; * јргумент GetMessage() необходимо занул€ть, иначе возможна ошибка
+; * јргумент GetMessage() необходимо занул§ть, иначе возможна ошибка
 
 format PE GUI 4.0
 
@@ -13,27 +13,6 @@ section '.text' code readable executable
 
 include 'utils.asm'
 
-  ; TODO: ѕереместить это в секцию данных
-
-  szEmptyStr db 0
-
-  szFile  db 'File', 0
-  szEdit  db 'Edit', 0
-  szView  db 'View', 0
-  szAbout db 'About', 0
-
-  ; Ёлементы меню File
-  szOpen db 'Open', 0
-  szNew  db 'New', 0
-  szSave db 'Save', 0
-  szExit db 'Exit', 0
-
-  ; Ёлементы меню Edit
-  szUndo db 'Undo', 0
-
-  ; Ёлементы меню View
-  ; ...
-
 proc Paint, hWnd
   locals
     ps PAINTSTRUCT
@@ -42,7 +21,7 @@ proc Paint, hWnd
   lea eax, [ps]
   invoke BeginPaint, [hWnd], eax
 
-  ; PAINTING ...
+  ; TODO: –исование здесь
 
   invoke ValidateRect, [hWnd], 0
   invoke EndPaint, [hWnd], 0
@@ -90,11 +69,11 @@ proc BuildMenu, hWnd
     hPopMenuView dd ?
   endl
 
-  ; —оздание "основы" меню (места, где располагаютс€ первичные кнопки)
+  ; —оздание "основы" меню (места, где располагаютс§ первичные кнопки)
   invoke CreateMenu
   mov [hMainMenu], eax
 
-  ; —оздание подменю дл€ кнопок
+  ; —оздание подменю дл§ кнопок
   invoke CreatePopupMenu
   mov [hPopMenuFile], eax
   invoke CreatePopupMenu
@@ -124,7 +103,7 @@ endp
 
 ; –езультат - ATOM зарегистрированного класса
 proc CreateWindowClass
-  ; ќбъ€вить переменную 'class' на стеке
+  ; ƒобавить переменную 'class' на стеке
   local class WNDCLASSEX
 
   ; ѕоложить указатель на переменную 'class' в регистр ebx
@@ -169,13 +148,13 @@ proc EntryPoint
 
   call CreateWindowClass
   test eax, eax
-  jz .EXIT ; TODO: —ообщение об ошибке
+  jz .EXIT ; TODO: –ообщение об ошибке
 
   invoke CreateWindowEx,\
-    WS_EX_OVERLAPPEDWINDOW,\
-    szClassName,\
-    szWndName,\
-    WS_OVERLAPPEDWINDOW,\
+    WS_EX_OVERLAPPEDWINDOW,\ ; ExtStyle
+    szClassName,\            ; ClassName
+    szWndName,\              ; WindowName
+    WS_OVERLAPPEDWINDOW,\    ; style
     100,\ ; x
     120,\ ; y
     800,\ ; width
@@ -183,7 +162,7 @@ proc EntryPoint
     0,\   ; hParent
     0,\   ; hMenu
     [hInstance],\ ; hInstance
-    0     ; lParam
+    0             ; lParam
 
   ; —охран€ем в edi хендл созданного окна
   push edi
@@ -212,12 +191,45 @@ proc EntryPoint
 
 endp
 
+section '.const' data readable
+
+  szEmptyStr db 0
+
 section '.data' data readable writeable
+
+  ;
+  ; ќбщие переменные программы
+  ;
 
   hInstance   dd ?
 
+  ;
+  ; ѕеременные окна программы
+  ;
+
   szClassName db 'CustomClass001',0
   szWndName   db 'flatpaint',0
+
+  ;
+  ; ѕеременные подменю программы
+  ;
+
+  szFile  db 'File', 0
+  szEdit  db 'Edit', 0
+  szView  db 'View', 0
+  szAbout db 'About', 0
+
+  ; Ёлементы подменю File
+  szOpen db 'Open', 0
+  szNew  db 'New', 0
+  szSave db 'Save', 0
+  szExit db 'Exit', 0
+
+  ; Ёлементы подменю Edit
+  szUndo db 'Undo', 0
+
+  ; Ёлементы подменю View
+  ; ...
 
 section '.idata' import data readable
 
