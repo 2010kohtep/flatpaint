@@ -51,3 +51,8 @@ proc FreeChunks
 
   ret
 endp
+
+proc ChunkExists, x, y
+  xor eax, eax
+  ret
+endp

@@ -6,7 +6,7 @@ section '.data' data readable writeable
 
   ; ќбъ€вление массива структур с помощью db, так как средства €зыка FASM
   ; не позвол€ют сделать иначе.
-  gChunks    db sizeof.drawchunk_t * 64 dup(0)
+  gChunks    db sizeof.drawchunk_t * 4096 dup(0)
   gLastChunk drawchunk_t 0 ; ѕеременна€ дл€ обозначени€ конца массива gChunks
 
   ;

@@ -15,15 +15,30 @@ proc Paint, hWnd
 
   ; TODO: Рисование здесь
 
-  invoke SetPixel, [hdc], 150, 25, 0x000000
-  invoke SetPixel, [hdc], 151, 25, 0x000000
-  invoke SetPixel, [hdc], 152, 25, 0x000000
-  invoke SetPixel, [hdc], 153, 25, 0x000000
-  invoke SetPixel, [hdc], 154, 25, 0x000000
-  invoke SetPixel, [hdc], 155, 25, 0x000000
-  invoke SetPixel, [hdc], 156, 25, 0x000000
-  invoke SetPixel, [hdc], 157, 25, 0x000000
-  invoke SetPixel, [hdc], 158, 25, 0x000000
+  push edi
+  push esi
+
+  lea edi, [gChunks]
+  lea esi, [gLastChunk]
+
+  virtual at edi
+    .chunk drawchunk_t
+  end virtual
+
+.FILL:
+  cmp [.chunk.created], 0
+  je .DONT_DRAW
+
+  invoke SetPixel, [hdc], [.chunk.x], [.chunk.y], 0x000000
+
+.DONT_DRAW:
+  add edi, sizeof.drawchunk_t
+
+  cmp edi, esi
+  jne .FILL
+
+  pop esi
+  pop edi
 
   ;invoke ValidateRect, [hWnd], 0
   invoke EndPaint, [hWnd], 0
@@ -40,6 +55,8 @@ proc WndProc, hWnd, uMsg, wParam, lParam
    je .WM_DESTROY
   cmp eax, WM_PAINT
    je .WM_PAINT
+  cmp eax, WM_MOUSEMOVE
+   je .WM_MOUSEMOVE
 
   jmp .DEFAULT
 
@@ -53,6 +70,34 @@ proc WndProc, hWnd, uMsg, wParam, lParam
 
 .WM_PAINT:
   stdcall Paint, [hWnd]
+  jmp .EXIT
+
+.WM_MOUSEMOVE:
+  mov eax, [wParam]
+  test eax, MK_LBUTTON
+    jz .EXIT ; Покинуть обработчик, если ЛКМ не нажата
+
+  call CreateChunk
+  test eax, eax
+    jz .EXIT
+
+  virtual at eax
+    .chunk drawchunk_t
+  end virtual
+
+  ; Положить в ECX координаты точки
+  mov ecx, [lParam]
+  ; Положить в EDX ось X
+  mov edx, ecx
+  and edx, 0xFFFF
+  ; Положить в ECX ось Y
+  shr ecx, 0x10
+
+  mov [.chunk.x], edx
+  mov [.chunk.y], ecx
+
+  invoke InvalidateRect, [hWnd], 0, 0
+
   jmp .EXIT
 
 .DEFAULT:
@@ -145,9 +190,6 @@ endp
 proc EntryPoint
   local msg MSG
 
-  stdcall FreeChunks
-  stdcall CreateChunk
-
   push ebx
   lea ebx, [msg]
   stdcall memset, ebx, 0, sizeof.MSG
@@ -191,9 +233,7 @@ proc EntryPoint
 
   invoke TranslateMessage, ebx
   invoke DispatchMessage, ebx
-  invoke Sleep, 10
-
-  ;invoke InvalidateRect, edi, 0, 1
+  ;invoke Sleep, 10
 
   jmp .LOOP
 
