@@ -10,6 +10,7 @@ section '.data' data readable writeable
 
   hInstance   dd ?
   hWindow     dd ?
+  hStdOutput  dd ?
 
   ;
   ; Переменные окна программы

@@ -6,6 +6,7 @@ section '.text' code readable executable
 
 include 'utils.asm'
 include 'chunks.asm'
+include 'console.asm'
 
 proc Paint, hWnd
   locals
@@ -16,8 +17,6 @@ proc Paint, hWnd
   lea eax, [ps]
   invoke BeginPaint, [hWnd], eax
   mov [hdc], eax
-
-  ; TODO: Рисование здесь
 
   push edi
   push esi
@@ -51,6 +50,9 @@ proc Paint, hWnd
 endp
 
 proc WndProc, hWnd, uMsg, wParam, lParam
+
+  ;ccall printf, szWMDebug, [hWnd], [uMsg], [wParam], [lParam]
+
   mov eax, [uMsg]
 
   cmp eax, WM_CREATE
@@ -61,6 +63,10 @@ proc WndProc, hWnd, uMsg, wParam, lParam
    je .WM_PAINT
   cmp eax, WM_MOUSEMOVE
    je .WM_MOUSEMOVE
+;  cmp eax, WM_MENUSELECT
+;   je .WM_MENUSELECT
+  cmp eax, WM_COMMAND
+   je .WM_COMMAND
 
   jmp .DEFAULT
 
@@ -83,7 +89,13 @@ proc WndProc, hWnd, uMsg, wParam, lParam
 
   call CreateChunk
   test eax, eax
-    jz .EXIT
+    jnz .CHUNK_CREATED
+
+   ; Не удалось получить свободный чанк, выход
+   ccall printf, szOutOfChunks
+   jmp .EXIT
+
+.CHUNK_CREATED:
 
   virtual at eax
     .chunk drawchunk_t
@@ -103,6 +115,47 @@ proc WndProc, hWnd, uMsg, wParam, lParam
   invoke InvalidateRect, [hWnd], 0, 0
 
   jmp .EXIT
+
+.WM_COMMAND:
+  mov eax, [wParam]
+  and eax, 0xFFFF
+
+  ;ccall printf, szWM_CommandDebug, eax
+
+  cmp eax, 0x1000
+   je .CMD_CLEAR
+
+  cmp eax, 0x1003
+   je .WM_DESTROY
+
+  cmp eax, 0x3000
+   je .CMD_ABOUT
+
+  jmp .EXIT
+
+.CMD_CLEAR:
+  stdcall FreeChunks
+  invoke InvalidateRect, [hWnd], 0, 1
+
+  jmp .EXIT
+.CMD_ABOUT:
+  invoke MessageBoxA, HWND_DESKTOP, szAboutText, szEmptyStr, MB_ICONINFORMATION + MB_SYSTEMMODAL
+  jmp .EXIT
+
+;.WM_MENUSELECT:
+;
+;  ; Положить в ECX дескриптор меню, по которому щёлкнули мышью
+;  mov ecx, [lParam]
+;
+;  mov eax, [wParam]
+;  ; Положить в EDX пункт меню или индекс подменю
+;  mov edx, eax
+;  and edx, 0xFFFF
+;  ; Положить в EAX флаги меню
+;  shr eax, 0x10
+;
+;  ccall printf, szMenuSelectDebug, edx, eax, ecx
+;  jmp .EXIT
 
 .DEFAULT:
   invoke DefWindowProc, [hWnd], [uMsg], [wParam], [lParam]
@@ -136,17 +189,16 @@ proc BuildMenu, hWnd
 
   ; Создание кнопок меню и подменю
   invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuFile], szFile
-    invoke AppendMenu, [hPopMenuFile], MF_STRING, 1000, szNew
-    ;invoke AppendMenu, [hPopMenuFile], MF_STRING, 1001, szOpen
-    invoke AppendMenu, [hPopMenuFile], MF_STRING, 1002, szSave
-    invoke AppendMenu, [hPopMenuFile], MF_SEPARATOR, 1003, szEmptyStr
-    invoke AppendMenu, [hPopMenuFile], MF_STRING, 1004, szExit
+    invoke AppendMenu, [hPopMenuFile], MF_STRING,    0x1000, szNew
+    invoke AppendMenu, [hPopMenuFile], MF_STRING,    0x1001, szSave
+    invoke AppendMenu, [hPopMenuFile], MF_SEPARATOR, 0x1002, szEmptyStr
+    invoke AppendMenu, [hPopMenuFile], MF_STRING,    0x1003, szExit
 
   invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuEdit], szEdit
-    invoke AppendMenu, [hPopMenuEdit], MF_STRING, 1000, szUndo
+    invoke AppendMenu, [hPopMenuEdit], MF_STRING, 0x2000, szUndo
 
   invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuView], szView
-  invoke AppendMenu, [hMainMenu], MF_STRING, 0, szAbout
+  invoke AppendMenu, [hMainMenu], MF_STRING, 0x3000, szAbout
 
   ; Привязка меню к окну
   invoke SetMenu, [hWnd], [hMainMenu]
@@ -201,6 +253,11 @@ proc EntryPoint
   invoke GetModuleHandle, 0
   mov [hInstance], eax
 
+  invoke AllocConsole
+
+  invoke GetStdHandle, STD_OUTPUT_HANDLE
+  mov [hStdOutput], eax
+
   call CreateWindowClass
   test eax, eax
   jz .EXIT ; TODO: Сообщение об ошибке
@@ -220,13 +277,11 @@ proc EntryPoint
     0             ; lParam
 
   ; Сохраняем в edi хендл созданного окна
-  ;push edi
+  push edi
   mov edi, eax
 
   invoke ShowWindow, edi, SW_SHOWNORMAL
   invoke UpdateWindow, edi
-
-  ;pop edi
 
 .LOOP:
   invoke GetMessage, ebx, 0, 0, 0
@@ -237,7 +292,6 @@ proc EntryPoint
 
   invoke TranslateMessage, ebx
   invoke DispatchMessage, ebx
-  ;invoke Sleep, 10
 
   jmp .LOOP
 

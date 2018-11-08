@@ -21,3 +21,18 @@ proc memset dest, val, size
 
   ret
 endp
+
+proc strlen str
+  push edi
+
+  xor eax, eax
+  or ecx, -1
+  mov edi, [str]
+  repne scasb
+  not ecx
+  dec ecx
+
+  pop edi
+  mov eax, ecx
+  ret
+endp
