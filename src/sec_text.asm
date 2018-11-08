@@ -139,7 +139,7 @@ proc WndProc, hWnd, uMsg, wParam, lParam
 
   jmp .EXIT
 .CMD_ABOUT:
-  invoke MessageBoxA, HWND_DESKTOP, szAboutText, szEmptyStr, MB_ICONINFORMATION + MB_SYSTEMMODAL
+  invoke MessageBoxA, HWND_DESKTOP, szAboutText, szAboutHeader, MB_ICONINFORMATION + MB_SYSTEMMODAL
   jmp .EXIT
 
 ;.WM_MENUSELECT:

@@ -11,4 +11,4 @@ section '.const' data readable
   szOutOfChunks     db 'Out of chunks.',10,0
 
   szAboutHeader db 'About Box',0
-  szAboutText   db 'FlatPaint - Paint, written in FASM',10,10,'Alexander B. (c) 2018',0
+  szAboutText   db 'FlatPaint - Paint, written in FASM.',10,10,'Alexander B. (c) 2018',0
