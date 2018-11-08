@@ -1,6 +1,7 @@
 section '.text' code readable executable
 
 include 'utils.asm'
+include 'chunks.asm'
 
 proc Paint, hWnd
   locals
@@ -14,7 +15,15 @@ proc Paint, hWnd
 
   ; TODO: Рисование здесь
 
-  invoke SetPixel, [hdc], 5, 12, 0x000000
+  invoke SetPixel, [hdc], 150, 25, 0x000000
+  invoke SetPixel, [hdc], 151, 25, 0x000000
+  invoke SetPixel, [hdc], 152, 25, 0x000000
+  invoke SetPixel, [hdc], 153, 25, 0x000000
+  invoke SetPixel, [hdc], 154, 25, 0x000000
+  invoke SetPixel, [hdc], 155, 25, 0x000000
+  invoke SetPixel, [hdc], 156, 25, 0x000000
+  invoke SetPixel, [hdc], 157, 25, 0x000000
+  invoke SetPixel, [hdc], 158, 25, 0x000000
 
   ;invoke ValidateRect, [hWnd], 0
   invoke EndPaint, [hWnd], 0
@@ -99,35 +108,35 @@ endp
 ; Результат - ATOM зарегистрированного класса
 proc CreateWindowClass
   ; Добавить переменную 'class' на стеке
-  local class WNDCLASSEX
+  local .class WNDCLASSEX
 
   ; Положить указатель на переменную 'class' в регистр ebx
-  lea eax, [class]
+  lea eax, [.class]
 
   ; Занулить переменную 'class'
   stdcall memset, eax, 0, sizeof.WNDCLASS
 
   mov eax, [hInstance]
-  mov [class.hInstance], eax
+  mov [.class.hInstance], eax
 
-  mov [class.cbSize],        sizeof.WNDCLASSEX
-  mov [class.style],         CS_HREDRAW + CS_VREDRAW
-  mov [class.lpfnWndProc],   WndProc
-  mov [class.lpszClassName], szClassName
+  mov [.class.cbSize],        sizeof.WNDCLASSEX
+  mov [.class.style],         CS_HREDRAW + CS_VREDRAW
+  mov [.class.lpfnWndProc],   WndProc
+  mov [.class.lpszClassName], szClassName
 
   invoke LoadIcon, eax, IDI_APPLICATION
-  mov [class.hIcon],   eax
-  mov [class.hIconSm], eax
+  mov [.class.hIcon],   eax
+  mov [.class.hIconSm], eax
 
   invoke LoadCursor, 0, IDC_ARROW
-  mov [class.hCursor],  eax
+  mov [.class.hCursor],  eax
 
   ;mov [class.hbrBackground], COLOR_APPWORKSPACE
   invoke CreateSolidBrush, 0xFFFFFF
-  mov [class.hbrBackground], eax
+  mov [.class.hbrBackground], eax
 
   ; Регистрация класса
-  lea eax, [class]
+  lea eax, [.class]
   invoke RegisterClassEx, eax
 
   ret
@@ -135,6 +144,9 @@ endp
 
 proc EntryPoint
   local msg MSG
+
+  stdcall FreeChunks
+  stdcall CreateChunk
 
   push ebx
   lea ebx, [msg]
@@ -145,7 +157,7 @@ proc EntryPoint
 
   call CreateWindowClass
   test eax, eax
-  jz .EXIT ; TODO: Рообщение об ошибке
+  jz .EXIT ; TODO: Сообщение об ошибке
 
   invoke CreateWindowEx,\
     WS_EX_OVERLAPPEDWINDOW,\ ; ExtStyle
