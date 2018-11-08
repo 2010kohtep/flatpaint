@@ -1,3 +1,7 @@
+;
+; Секция импорта
+;
+
 section '.idata' import data readable
 
 ; Подключить набор библиотек

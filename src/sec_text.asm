@@ -1,3 +1,7 @@
+;
+; Секция кода
+;
+
 section '.text' code readable executable
 
 include 'utils.asm'
@@ -65,7 +69,7 @@ proc WndProc, hWnd, uMsg, wParam, lParam
   jmp .EXIT
 
 .WM_DESTROY:
-  invoke PostQuitMessage, WM_QUIT
+  invoke PostQuitMessage, 0 ; EXIT_SUCCESS
   jmp .EXIT
 
 .WM_PAINT:
@@ -133,7 +137,7 @@ proc BuildMenu, hWnd
   ; Создание кнопок меню и подменю
   invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuFile], szFile
     invoke AppendMenu, [hPopMenuFile], MF_STRING, 1000, szNew
-    invoke AppendMenu, [hPopMenuFile], MF_STRING, 1001, szOpen
+    ;invoke AppendMenu, [hPopMenuFile], MF_STRING, 1001, szOpen
     invoke AppendMenu, [hPopMenuFile], MF_STRING, 1002, szSave
     invoke AppendMenu, [hPopMenuFile], MF_SEPARATOR, 1003, szEmptyStr
     invoke AppendMenu, [hPopMenuFile], MF_STRING, 1004, szExit
