@@ -4,7 +4,8 @@ include 'utils.asm'
 
 proc Paint, hWnd
   locals
-
+    ps PAINTSTRUCT ?
+    hdc dd ?
   endl
 
   lea eax, [ps]
@@ -13,7 +14,9 @@ proc Paint, hWnd
 
   ; TODO: Рисование здесь
 
-  invoke ValidateRect, [hWnd], 0
+  invoke SetPixel, [hdc], 5, 12, 0x000000
+
+  ;invoke ValidateRect, [hWnd], 0
   invoke EndPaint, [hWnd], 0
 
   ret
@@ -26,6 +29,8 @@ proc WndProc, hWnd, uMsg, wParam, lParam
    je .WM_CREATE
   cmp eax, WM_DESTROY
    je .WM_DESTROY
+  cmp eax, WM_PAINT
+   je .WM_PAINT
 
   jmp .DEFAULT
 
@@ -105,19 +110,21 @@ proc CreateWindowClass
   mov eax, [hInstance]
   mov [class.hInstance], eax
 
-  mov [class.cbSize], sizeof.WNDCLASSEX
-  mov [class.style], CS_HREDRAW + CS_VREDRAW
-  mov [class.lpfnWndProc], WndProc
+  mov [class.cbSize],        sizeof.WNDCLASSEX
+  mov [class.style],         CS_HREDRAW + CS_VREDRAW
+  mov [class.lpfnWndProc],   WndProc
   mov [class.lpszClassName], szClassName
 
   invoke LoadIcon, eax, IDI_APPLICATION
-  mov [class.hIcon], eax
+  mov [class.hIcon],   eax
   mov [class.hIconSm], eax
 
   invoke LoadCursor, 0, IDC_ARROW
-  mov [class.hCursor], eax
+  mov [class.hCursor],  eax
 
-  mov [class.hbrBackground], COLOR_APPWORKSPACE
+  ;mov [class.hbrBackground], COLOR_APPWORKSPACE
+  invoke CreateSolidBrush, 0xFFFFFF
+  mov [class.hbrBackground], eax
 
   ; Регистрация класса
   lea eax, [class]
@@ -149,19 +156,19 @@ proc EntryPoint
     120,\ ; y
     800,\ ; width
     600,\ ; height
-    0,\   ; hParent
+    HWND_DESKTOP,\   ; hParent
     0,\   ; hMenu
     [hInstance],\ ; hInstance
     0             ; lParam
 
   ; Сохраняем в edi хендл созданного окна
-  push edi
+  ;push edi
   mov edi, eax
 
   invoke ShowWindow, edi, SW_SHOWNORMAL
   invoke UpdateWindow, edi
 
-  pop edi
+  ;pop edi
 
 .LOOP:
   invoke GetMessage, ebx, 0, 0, 0
@@ -173,6 +180,9 @@ proc EntryPoint
   invoke TranslateMessage, ebx
   invoke DispatchMessage, ebx
   invoke Sleep, 10
+
+  ;invoke InvalidateRect, edi, 0, 1
+
   jmp .LOOP
 
 .EXIT:

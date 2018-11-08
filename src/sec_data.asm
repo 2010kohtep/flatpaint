@@ -5,13 +5,7 @@ section '.data' data readable writeable
   ;
 
   hInstance   dd ?
-
-  ;
-  ; Переменные графики
-  ;
-
-  ps PAINTSTRUCT ?
-  hdc dd ?
+  hWindow     dd ?
 
   ;
   ; Переменные окна программы
