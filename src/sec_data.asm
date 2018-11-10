@@ -12,6 +12,8 @@ section '.data' data readable writeable
   hWindow     dd ?
   hStdOutput  dd ?
 
+  pPrevChunk  dd ? ; Указатель на предыдущий чанк. Необходим для связывания линиями.
+
   ;
   ; Переменные окна программы
   ;

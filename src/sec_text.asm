@@ -194,10 +194,10 @@ proc BuildMenu, hWnd
     invoke AppendMenu, [hPopMenuFile], MF_SEPARATOR, 0x1002, szEmptyStr
     invoke AppendMenu, [hPopMenuFile], MF_STRING,    0x1003, szExit
 
-  invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuEdit], szEdit
-    invoke AppendMenu, [hPopMenuEdit], MF_STRING, 0x2000, szUndo
+  ;invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuEdit], szEdit
+  ;  invoke AppendMenu, [hPopMenuEdit], MF_STRING, 0x2000, szUndo
 
-  invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuView], szView
+  ;invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuView], szView
   invoke AppendMenu, [hMainMenu], MF_STRING, 0x3000, szAbout
 
   ; Привязка меню к окну
