@@ -12,6 +12,9 @@ section '.data' data readable writeable
   hWindow     dd ?
   hStdOutput  dd ?
 
+  acrCustomColor dd 16 dup(0xFFFFFF)
+  gCurColor dd 0x000000
+
   pPrevChunk  dd ? ; ”казатель на предыдущий чанк. Ќеобходим дл€ св€зывани€ лини€ми.
 
   ;
@@ -38,6 +41,7 @@ section '.data' data readable writeable
 
   ; Ёлементы подменю Edit
   szUndo db 'Undo', 0
+  szSetColor db 'Set Color', 0
 
   ; Ёлементы подменю View
   ; ...

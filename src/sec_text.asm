@@ -32,7 +32,7 @@ proc Paint, hWnd
   cmp [.chunk.created], 0
   je .DONT_DRAW
 
-  invoke SetPixel, [hdc], [.chunk.x], [.chunk.y], 0x000000
+  invoke SetPixel, [hdc], [.chunk.x], [.chunk.y], [.chunk.color]
 
 .DONT_DRAW:
   add edi, sizeof.drawchunk_t
@@ -57,6 +57,7 @@ proc WndProc, hWnd, uMsg, wParam, lParam
 
   cmp eax, WM_CREATE
    je .WM_CREATE
+
   cmp eax, WM_DESTROY
    je .WM_DESTROY
   cmp eax, WM_PAINT
@@ -111,6 +112,8 @@ proc WndProc, hWnd, uMsg, wParam, lParam
 
   mov [.chunk.x], edx
   mov [.chunk.y], ecx
+  mov edx, [gCurColor]
+  mov [.chunk.color], edx
 
   invoke InvalidateRect, [hWnd], 0, 0
 
@@ -128,10 +131,36 @@ proc WndProc, hWnd, uMsg, wParam, lParam
   cmp eax, 0x1003
    je .WM_DESTROY
 
+  cmp eax, 0x2000
+   je .CMD_SET_COLOR
+
   cmp eax, 0x3000
    je .CMD_ABOUT
 
   jmp .EXIT
+
+.CMD_SET_COLOR:
+   local .color CHOOSECOLOR
+
+   lea eax, [acrCustomColor]
+   mov ecx, [gCurColor]
+   mov edx, [hWindow]
+
+   mov [.color.lStructSize], sizeof.CHOOSECOLOR
+   mov [.color.Flags], CC_FULLOPEN + CC_RGBINIT
+   mov [.color.lpCustColors], eax
+   mov [.color.hwndOwner], edx
+   mov [.color.rgbResult], ecx
+   lea eax, [.color]
+   invoke ChooseColor, eax
+
+   test eax, eax
+    jz .EXIT
+
+   mov eax, [.color.rgbResult]
+   mov [gCurColor], eax
+
+   jmp .EXIT
 
 .CMD_CLEAR:
   stdcall FreeChunks
@@ -194,7 +223,8 @@ proc BuildMenu, hWnd
     invoke AppendMenu, [hPopMenuFile], MF_SEPARATOR, 0x1002, szEmptyStr
     invoke AppendMenu, [hPopMenuFile], MF_STRING,    0x1003, szExit
 
-  ;invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuEdit], szEdit
+  invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuEdit], szEdit
+    invoke AppendMenu, [hPopMenuEdit], MF_STRING, 0x2000, szSetColor
   ;  invoke AppendMenu, [hPopMenuEdit], MF_STRING, 0x2000, szUndo
 
   ;invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuView], szView
