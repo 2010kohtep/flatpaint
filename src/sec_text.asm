@@ -8,6 +8,95 @@ include 'utils.asm'
 include 'chunks.asm'
 include 'console.asm'
 
+proc GetHDCWidth hdc
+  locals
+    .bmpHdr BITMAP ?
+  endl
+
+  lea eax, [.bmpHdr]
+  xor edx, edx
+  mov ecx, sizeof.BITMAP
+  stdcall asm_memset, [.bmpHdr]
+
+  invoke GetCurrentObject, [hdc], 7 ; OBJ_BITMAP
+
+  lea edx, [.bmpHdr]
+  push edx
+  push sizeof.BITMAP
+  push eax
+  call [GetObject]
+  ;invoke GetObject, eax, sizeof.BITMAP, [.bmpHdr]
+
+  mov eax, [.bmpHdr.bmWidth]
+
+  ret
+endp
+
+  szFFFF db 'C:\\ffff.bmp', 0
+
+proc LoadBitmapImage uses edi ebx, hWnd
+  locals
+    .rect RECT ?
+  endl
+
+  invoke GetDC, [hWnd]
+  mov ebx, eax ; hdc
+
+  invoke LoadImage, 0, szFFFF, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE
+  invoke CreatePatternBrush, eax
+  mov edi, eax ; brush
+
+  lea eax, [.rect]
+  invoke GetWindowRect, [hWnd], eax
+  lea eax, [.rect]
+  invoke FillRect, ebx, eax, edi
+  invoke DeleteObject, edi
+
+  ret
+endp
+
+proc WritePixel uses edi esi ebx, hdc, chunk, size
+  mov ecx, [chunk]
+  virtual at ecx
+    .chunk drawchunk_t
+  end virtual
+
+  mov edi, [.chunk.x]
+  mov esi, [.chunk.y]
+
+  cmp [size], 0
+  je .EXIT
+
+  locals
+    .left dd ?      ; Количество линий, которое осталось пройти
+  endl
+
+  mov eax, [size]
+  mov edx, [.chunk.x]
+  lea ebx, [eax + edx] ; Последний X пиксель, достигнув которого мы должны спуститься на один пиксель ниже
+
+  mov eax, [size]
+  mov [.left], eax
+
+.LOOP_Y:
+  mov ecx, [chunk]
+  mov edi, [.chunk.x]
+.LOOP_X:
+  invoke SetPixel, [hdc], edi, esi, [gCurColor]
+  inc edi
+  cmp edi, ebx
+  jl .LOOP_X
+
+  dec [.left]
+  jz .EXIT
+
+  inc esi
+  jmp .LOOP_Y
+
+.EXIT:
+  ret
+endp
+
 proc Paint, hWnd
   locals
     ps PAINTSTRUCT ?
@@ -32,7 +121,9 @@ proc Paint, hWnd
   cmp [.chunk.created], 0
   je .DONT_DRAW
 
-  invoke SetPixel, [hdc], [.chunk.x], [.chunk.y], [.chunk.color]
+  lea eax, [.chunk]
+  stdcall WritePixel, [hdc], eax, 4
+  ;invoke SetPixel, [hdc], [.chunk.x], [.chunk.y], [.chunk.color]
 
 .DONT_DRAW:
   add edi, sizeof.drawchunk_t
@@ -46,6 +137,31 @@ proc Paint, hWnd
   ;invoke ValidateRect, [hWnd], 0
   invoke EndPaint, [hWnd], 0
 
+  ret
+endp
+
+proc SetPenColor
+  local .color CHOOSECOLOR
+
+  lea eax, [acrCustomColor]
+  mov ecx, [gCurColor]
+  mov edx, [hWindow]
+
+  mov [.color.lStructSize], sizeof.CHOOSECOLOR
+  mov [.color.Flags], CC_FULLOPEN + CC_RGBINIT
+  mov [.color.lpCustColors], eax
+  mov [.color.hwndOwner], edx
+  mov [.color.rgbResult], ecx
+  lea eax, [.color]
+  invoke ChooseColor, eax
+
+  test eax, eax
+   jz .EXIT
+
+  mov eax, [.color.rgbResult]
+  mov [gCurColor], eax
+
+.EXIT:
   ret
 endp
 
@@ -64,6 +180,8 @@ proc WndProc, hWnd, uMsg, wParam, lParam
    je .WM_PAINT
   cmp eax, WM_MOUSEMOVE
    je .WM_MOUSEMOVE
+  cmp eax, WM_LBUTTONDOWN
+   je .WM_LBUTTONDOWN
 ;  cmp eax, WM_MENUSELECT
 ;   je .WM_MENUSELECT
   cmp eax, WM_COMMAND
@@ -84,6 +202,7 @@ proc WndProc, hWnd, uMsg, wParam, lParam
   jmp .EXIT
 
 .WM_MOUSEMOVE:
+.WM_LBUTTONDOWN:
   mov eax, [wParam]
   test eax, MK_LBUTTON
     jz .EXIT ; Покинуть обработчик, если ЛКМ не нажата
@@ -97,7 +216,6 @@ proc WndProc, hWnd, uMsg, wParam, lParam
    jmp .EXIT
 
 .CHUNK_CREATED:
-
   virtual at eax
     .chunk drawchunk_t
   end virtual
@@ -128,7 +246,10 @@ proc WndProc, hWnd, uMsg, wParam, lParam
   cmp eax, 0x1000
    je .CMD_CLEAR
 
-  cmp eax, 0x1003
+  cmp eax, 0x1001
+   je .CMD_OPEN
+
+  cmp eax, 0x1004
    je .WM_DESTROY
 
   cmp eax, 0x2000
@@ -140,25 +261,7 @@ proc WndProc, hWnd, uMsg, wParam, lParam
   jmp .EXIT
 
 .CMD_SET_COLOR:
-   local .color CHOOSECOLOR
-
-   lea eax, [acrCustomColor]
-   mov ecx, [gCurColor]
-   mov edx, [hWindow]
-
-   mov [.color.lStructSize], sizeof.CHOOSECOLOR
-   mov [.color.Flags], CC_FULLOPEN + CC_RGBINIT
-   mov [.color.lpCustColors], eax
-   mov [.color.hwndOwner], edx
-   mov [.color.rgbResult], ecx
-   lea eax, [.color]
-   invoke ChooseColor, eax
-
-   test eax, eax
-    jz .EXIT
-
-   mov eax, [.color.rgbResult]
-   mov [gCurColor], eax
+   stdcall SetPenColor
 
    jmp .EXIT
 
@@ -167,6 +270,12 @@ proc WndProc, hWnd, uMsg, wParam, lParam
   invoke InvalidateRect, [hWnd], 0, 1
 
   jmp .EXIT
+
+.CMD_OPEN:
+  stdcall LoadBitmapImage, [hWnd]
+
+  jmp .EXIT
+
 .CMD_ABOUT:
   invoke MessageBoxA, HWND_DESKTOP, szAboutText, szAboutHeader, MB_ICONINFORMATION + MB_SYSTEMMODAL
   jmp .EXIT
@@ -219,13 +328,13 @@ proc BuildMenu, hWnd
   ; Создание кнопок меню и подменю
   invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuFile], szFile
     invoke AppendMenu, [hPopMenuFile], MF_STRING,    0x1000, szNew
-    invoke AppendMenu, [hPopMenuFile], MF_STRING,    0x1001, szSave
-    invoke AppendMenu, [hPopMenuFile], MF_SEPARATOR, 0x1002, szEmptyStr
-    invoke AppendMenu, [hPopMenuFile], MF_STRING,    0x1003, szExit
+    invoke AppendMenu, [hPopMenuFile], MF_STRING,    0x1001, szOpen
+    invoke AppendMenu, [hPopMenuFile], MF_STRING,    0x1002, szSave
+    invoke AppendMenu, [hPopMenuFile], MF_SEPARATOR, 0x1003, szEmptyStr
+    invoke AppendMenu, [hPopMenuFile], MF_STRING,    0x1004, szExit
 
   invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuEdit], szEdit
     invoke AppendMenu, [hPopMenuEdit], MF_STRING, 0x2000, szSetColor
-  ;  invoke AppendMenu, [hPopMenuEdit], MF_STRING, 0x2000, szUndo
 
   ;invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuView], szView
   invoke AppendMenu, [hMainMenu], MF_STRING, 0x3000, szAbout

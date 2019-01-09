@@ -41,7 +41,7 @@ section '.data' data readable writeable
 
   ; Ёлементы подменю Edit
   szUndo db 'Undo', 0
-  szSetColor db 'Set Color', 0
+  szSetColor db 'Choose color', 0
 
   ; Ёлементы подменю View
   ; ...
