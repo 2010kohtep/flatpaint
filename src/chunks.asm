@@ -1,4 +1,3 @@
-; TODO: ÷вет
 ; TODO: –одительский чанк дл€ создани€ соединительных линий между чанками
 
 struct drawchunk_t
@@ -11,6 +10,8 @@ ends
 
 ; —оздать чанк, в который можно записать информацию о пикселе.
 ; ! ѕосле получени€ свободного чанка, тот считаетс€ созданным (поле created устанавливаетс€ в 1) !
+;
+; cl - значение inherited
 proc CreateChunk
   lea eax, [gChunks]
 
@@ -21,7 +22,7 @@ proc CreateChunk
   lea edx, [gLastChunk]
 
 .LOOP:
-  cmp [.chunk.created], 0
+  cmp byte [.chunk.created], 0
   je .FOUND
   add eax, sizeof.drawchunk_t
 
@@ -34,11 +35,12 @@ proc CreateChunk
   xor eax, eax
   ret
 .FOUND:
-  mov [.chunk.created], 1
-  mov [.chunk.inherited], 0
+  mov byte [.chunk.created], 1
+  mov byte [.chunk.inherited], cl
   ret
 endp
 
+; ”далить все существующие чанки
 proc FreeChunks
   lea eax, [gChunks]
 
@@ -55,10 +57,5 @@ proc FreeChunks
   cmp eax, edx
   jne .LOOP
 
-  ret
-endp
-
-proc ChunkExists, x, y
-  xor eax, eax
   ret
 endp

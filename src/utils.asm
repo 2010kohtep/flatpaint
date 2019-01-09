@@ -36,3 +36,24 @@ proc strlen str
   mov eax, ecx
   ret
 endp
+
+; eax - value
+proc abs
+  test eax, eax
+  jns .NOT_SIGNED
+  not eax
+  inc eax
+
+.NOT_SIGNED:
+  ret
+endp
+
+; eax - value1
+; edx - value2
+proc max
+  cmp eax, edx
+  jae .EXIT
+  xchg eax, edx
+.EXIT:
+  ret
+endp

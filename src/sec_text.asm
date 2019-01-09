@@ -97,7 +97,7 @@ proc WritePixel uses edi esi ebx, hdc, chunk, size
   ret
 endp
 
-proc Paint, hWnd
+proc Paint uses edi esi ebx, hWnd
   locals
     ps PAINTSTRUCT ?
     hdc dd ?
@@ -107,8 +107,8 @@ proc Paint, hWnd
   invoke BeginPaint, [hWnd], eax
   mov [hdc], eax
 
-  push edi
-  push esi
+  ;push edi
+  ;push esi
 
   lea edi, [gChunks]
   lea esi, [gLastChunk]
@@ -117,22 +117,38 @@ proc Paint, hWnd
     .chunk drawchunk_t
   end virtual
 
+  xor ebx, ebx
 .FILL:
+  virtual at ebx
+    .prev_chunk drawchunk_t ?
+  end virtual
+
   cmp [.chunk.created], 0
   je .DONT_DRAW
 
-  lea eax, [.chunk]
-  stdcall WritePixel, [hdc], eax, 4
-  ;invoke SetPixel, [hdc], [.chunk.x], [.chunk.y], [.chunk.color]
+  cmp [.chunk.inherited], 0
+  je .DONT_CONNECT
+
+  invoke MoveToEx, [hdc], [.prev_chunk.x], [.prev_chunk.y], 0
+  invoke LineTo, [hdc], [.chunk.x], [.chunk.y]
+
+.DONT_CONNECT:
+
+  ;lea eax, [.chunk]
+  ;stdcall WritePixel, [hdc], eax, 4
+
+  invoke SetPixel, [hdc], [.chunk.x], [.chunk.y], [.chunk.color]
 
 .DONT_DRAW:
+  mov ebx, edi ; Предыдущий чанк
+
   add edi, sizeof.drawchunk_t
 
   cmp edi, esi
   jne .FILL
 
-  pop esi
-  pop edi
+  ;pop esi
+  ;pop edi
 
   ;invoke ValidateRect, [hWnd], 0
   invoke EndPaint, [hWnd], 0
@@ -203,9 +219,12 @@ proc WndProc, hWnd, uMsg, wParam, lParam
 
 .WM_MOUSEMOVE:
 .WM_LBUTTONDOWN:
-  mov eax, [wParam]
-  test eax, MK_LBUTTON
+  mov ecx, [wParam]
+  test ecx, MK_LBUTTON
     jz .EXIT ; Покинуть обработчик, если ЛКМ не нажата
+
+  cmp eax, WM_MOUSEMOVE
+  sete cl
 
   call CreateChunk
   test eax, eax
