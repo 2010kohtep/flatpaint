@@ -1,6 +1,26 @@
 ;
-; Все функции, начинающиеся с 'asm_', имеют register соглашение.
+; Все функции в данном модуле, начинающиеся с 'asm_', имеют register соглашение.
 ;
+
+; eax - адрес записи
+; edx - адрес источника
+; ecx - количество байт для копирования
+proc asm_memcpy uses edi esi
+  mov edi, eax
+  mov esi, edx
+  repnz movsb
+
+  ret
+endp
+
+proc memcpy dest, src, size
+  mov eax, [dest]
+  mov edx, [src]
+  mov ecx, [size]
+  call asm_memcpy
+
+  ret
+endp
 
 ; eax - адрес записи
 ; edx - символ для записи

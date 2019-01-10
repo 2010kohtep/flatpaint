@@ -8,6 +8,149 @@ include 'utils.asm'
 include 'chunks.asm'
 include 'console.asm'
 
+szFileName db 'C:\saved.bmp',0
+
+; typedef struct tagBITMAPINFO {
+;    BITMAPINFOHEADER    bmiHeader;
+;    RGBQUAD             bmiColors[1];
+;} BITMAPINFO, FAR *LPBITMAPINFO, *PBITMAPINFO;
+
+struct RGBQUAD
+  rgbBlue     db ?
+  rgbGreen    db ?
+  rgbRed      db ?
+  rgbReserved db ?
+ends
+
+struct BITMAPINFO
+  bmiHeader BITMAPINFOHEADER ?
+  bmiColors RGBQUAD ?
+ends
+
+proc SaveDCToBitmap uses edi esi ebx, hWnd
+  locals
+    .bmfh BITMAPFILEHEADER ?
+    .bmih BITMAPINFOHEADER ?
+    .bi   BITMAPINFO ?
+    .rc RECT ?
+    .dibvalues dd ?
+    .hdc1 dd ?
+    .hdc2 dd ?
+    .OldObj dd ?
+  endl
+
+  lea eax, [.bmfh]
+  stdcall memset, eax, 0, sizeof.BITMAPFILEHEADER
+  lea eax, [.bmih]
+  stdcall memset, eax, 0, sizeof.BITMAPINFOHEADER
+
+  ; hdc1 = GetWindowDC(hStatic);
+  invoke GetWindowDC, [hWnd]
+  mov [.hdc1], eax
+  ; hdc2 = CreateCompatibleDC(hdc1);
+  invoke CreateCompatibleDC, eax
+  mov [.hdc2], eax
+
+  ; GetWindowRect(hStatic, &rc);
+  lea eax, [.rc]
+  invoke GetClientRect, [hWnd], eax
+  ;lea eax, [.rc]
+  ;invoke AdjustWindowRectEx, eax, WS_CAPTION + WS_SYSMENU + WS_MINIMIZEBOX, FALSE, 0
+
+  ; w = rc.right-rc.left;
+  mov eax, [.rc.right]
+  sub eax, [.rc.left]
+  mov edi, eax ; width
+
+  ; h = rc.bottom-rc.top;
+  mov eax, [.rc.bottom]
+  sub eax, [.rc.top]
+  mov esi, eax ; height
+
+  mov [.bmih.biSize], sizeof.BITMAPINFOHEADER
+  mov [.bmih.biWidth], edi
+  mov [.bmih.biHeight], esi
+  mov [.bmih.biPlanes], 1
+  mov [.bmih.biBitCount], 24
+  mov [.bmih.biCompression], BI_RGB
+
+   ; imul cl           ;AX = AL * CL
+   ; imul si           ;DX:AX = AX * SI
+   ; imul bx,ax        ;BX = BX * AX
+   ; imul cx,-5        ;CX = CX * (-5)
+   ; imul dx,bx,134h   ;DX = BX * 134h
+
+  ; bmih.biWidth * bmih.biBitCount
+  mov eax, edi
+  imul eax, 24
+  ; ((bmih.biWidth * bmih.biBitCount) + 31)
+  add eax, 31
+  ; (((bmih.biWidth * bmih.biBitCount) + 31) & ~31)
+  and eax, not 31
+  ; ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3)
+  shr eax, 3
+  ; ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3) * bmih.biHeight
+  imul eax, esi
+  ; bmih.biSizeImage = ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3) * bmih.biHeight;
+  mov [.bmih.biSizeImage], eax
+
+  ;  bi.bmiHeader = bmih;
+  lea eax, [.bmih]
+  lea edx, [.bi.bmiHeader]
+  stdcall memcpy, edx, eax, sizeof.BITMAPINFOHEADER
+  ;lea eax, [.bmih]
+  ;mov [.bi], eax
+
+  ; aBmp = CreateDIBSection(hdc1, &bi ,DIB_RGB_COLORS, (void**)&dibvalues, NULL, NULL);
+  lea eax, [.bi]
+  lea edx, [.dibvalues]
+  invoke CreateDIBSection, [.hdc1], eax, 0, edx, NULL, NULL ; DIB_RGB_COLORS - 0
+
+  ; OldObj = SelectObject(hdc2, aBmp);
+  invoke SelectObject, [.hdc2], eax
+  mov [.OldObj], eax
+
+  ; BitBlt(hdc2, 0, 0, w, h, hdc1, 0, 0, SRCCOPY);
+  invoke BitBlt, [.hdc2], 0, 0, edi, esi, [.hdc1], 0, 0, SRCCOPY
+
+  mov [.bmfh.bfOffBits], sizeof.BITMAPFILEHEADER + sizeof.BITMAPINFOHEADER
+
+  mov eax, [.bmih.biHeight]
+  imul eax, [.bmih.biWidth]
+  imul eax, 3 ; lea eax, [eax+eax*2]
+  add eax, sizeof.BITMAPFILEHEADER + sizeof.BITMAPINFOHEADER
+  mov [.bmfh.bfSize], eax
+
+  mov [.bmfh.bfType], 0x4D42
+
+  local .f dd ?
+  local .byteswritten dd ?
+
+  ; fileHandle = CreateFile(pszFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+  lea eax, [szFileName]
+  invoke CreateFileA, eax, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL
+  mov [.f], eax
+
+  lea ebx, [.byteswritten]
+
+  ; WriteFile(fileHandle, &bmfh, bytes_write, &bytes_written, NULL);
+  lea eax, [.bmfh]
+  invoke WriteFile, [.f], eax, sizeof.BITMAPFILEHEADER, ebx, NULL
+  ; WriteFile(fileHandle, &bmih, bytes_write, &bytes_written, NULL);
+  lea eax, [.bmih]
+  invoke WriteFile, [.f], eax, sizeof.BITMAPINFOHEADER, ebx, NULL
+  ; WriteFile(fileHandle, (void*)dibvalues, bytes_write, &bytes_written, NULL);
+  invoke WriteFile, [.f], [.dibvalues], [.bmih.biSizeImage], ebx, NULL
+
+  invoke CloseHandle, [.f]
+  invoke SelectObject, [.hdc2] , [.OldObj]
+  invoke DeleteObject, eax
+  invoke DeleteDC, [.hdc2]
+  invoke ReleaseDC, [hWnd], [.hdc1]
+
+  ret
+endp
+
 proc GetHDCWidth hdc
   locals
     .bmpHdr BITMAP ?
@@ -273,6 +416,9 @@ proc WndProc uses edi esi ebx, hWnd, uMsg, wParam, lParam
   cmp eax, 0x1001
    je .CMD_OPEN
 
+  cmp eax, 0x1002
+   je .CMD_SAVE
+
   cmp eax, 0x1004
    je .WM_DESTROY
 
@@ -282,6 +428,10 @@ proc WndProc uses edi esi ebx, hWnd, uMsg, wParam, lParam
   cmp eax, 0x3000
    je .CMD_ABOUT
 
+  jmp .EXIT
+
+.CMD_SAVE:
+  stdcall SaveDCToBitmap, [hWnd]
   jmp .EXIT
 
 .CMD_SET_COLOR:
