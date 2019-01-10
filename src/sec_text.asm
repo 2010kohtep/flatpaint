@@ -107,9 +107,6 @@ proc Paint uses edi esi ebx, hWnd
   invoke BeginPaint, [hWnd], eax
   mov [hdc], eax
 
-  ;push edi
-  ;push esi
-
   lea edi, [gChunks]
   lea esi, [gLastChunk]
 
@@ -129,7 +126,11 @@ proc Paint uses edi esi ebx, hWnd
   cmp [.chunk.inherited], 0
   je .DONT_CONNECT
 
-  invoke MoveToEx, [hdc], [.prev_chunk.x], [.prev_chunk.y], 0
+  invoke GetStockObject, 19 ; DC_PEN
+  invoke SelectObject, [hdc], eax
+  invoke SetDCPenColor, [hdc], [.chunk.color]
+
+  invoke MoveToEx, [hdc], [.prev_chunk.x], [.prev_chunk.y], NULL
   invoke LineTo, [hdc], [.chunk.x], [.chunk.y]
 
 .DONT_CONNECT:
@@ -146,9 +147,6 @@ proc Paint uses edi esi ebx, hWnd
 
   cmp edi, esi
   jne .FILL
-
-  ;pop esi
-  ;pop edi
 
   ;invoke ValidateRect, [hWnd], 0
   invoke EndPaint, [hWnd], 0
@@ -174,6 +172,8 @@ proc SetPenColor
   test eax, eax
    jz .EXIT
 
+  ccall printf, szColorChanged, [gCurColor], [.color.rgbResult]
+
   mov eax, [.color.rgbResult]
   mov [gCurColor], eax
 
@@ -181,7 +181,7 @@ proc SetPenColor
   ret
 endp
 
-proc WndProc, hWnd, uMsg, wParam, lParam
+proc WndProc uses edi esi ebx, hWnd, uMsg, wParam, lParam
 
   ;ccall printf, szWMDebug, [hWnd], [uMsg], [wParam], [lParam]
 
@@ -224,9 +224,18 @@ proc WndProc, hWnd, uMsg, wParam, lParam
     jz .EXIT ; Покинуть обработчик, если ЛКМ не нажата
 
   cmp eax, WM_MOUSEMOVE
-  sete cl
+  sete bl
 
-  call CreateChunk
+  ; Положить в ECX координаты точки
+  mov edx, [lParam]
+  ; Положить в ESI ось X
+  mov esi, edx
+  and esi, 0xFFFF
+  ; Положить в EDI ось Y
+  shr edi, 0x10
+
+  ;stdcall CreateChunkEx, esi, edi
+  stdcall CreateChunk
   test eax, eax
     jnz .CHUNK_CREATED
 
@@ -239,18 +248,14 @@ proc WndProc, hWnd, uMsg, wParam, lParam
     .chunk drawchunk_t
   end virtual
 
-  ; Положить в ECX координаты точки
-  mov ecx, [lParam]
-  ; Положить в EDX ось X
-  mov edx, ecx
-  and edx, 0xFFFF
-  ; Положить в ECX ось Y
-  shr ecx, 0x10
-
-  mov [.chunk.x], edx
-  mov [.chunk.y], ecx
+  mov [.chunk.x], esi
+  mov [.chunk.y], edi
   mov edx, [gCurColor]
   mov [.chunk.color], edx
+  mov [.chunk.inherited], bl
+
+  movzx edx, [.chunk.inherited]
+  ccall printf, szChunkCreated, [.chunk.x], [.chunk.y], [.chunk.color], edx
 
   invoke InvalidateRect, [hWnd], 0, 0
 
@@ -287,6 +292,8 @@ proc WndProc, hWnd, uMsg, wParam, lParam
 .CMD_CLEAR:
   stdcall FreeChunks
   invoke InvalidateRect, [hWnd], 0, 1
+
+  ccall printf, szCanvasCleared
 
   jmp .EXIT
 
