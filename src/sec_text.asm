@@ -54,10 +54,13 @@ proc SaveDCToBitmap uses edi esi ebx, hWnd
   ; GetWindowRect(hStatic, &rc);
   lea eax, [.rc]
   invoke GetClientRect, [hWnd], eax
-  ;lea eax, [.rc]
-  ;invoke AdjustWindowRectEx, eax, WS_CAPTION + WS_SYSMENU + WS_MINIMIZEBOX, FALSE, 0
 
-  ; w = rc.right-rc.left;
+  ccall printf, szSaveDCDebug1, [.rc.left], [.rc.right], [.rc.top], [.rc.bottom]
+
+  lea eax, [.rc]
+  invoke AdjustWindowRect , eax, WS_CAPTION + WS_SYSMENU + WS_MINIMIZEBOX, FALSE
+
+ ; w = rc.right-rc.left;
   mov eax, [.rc.right]
   sub eax, [.rc.left]
   mov edi, eax ; width
@@ -66,6 +69,8 @@ proc SaveDCToBitmap uses edi esi ebx, hWnd
   mov eax, [.rc.bottom]
   sub eax, [.rc.top]
   mov esi, eax ; height
+
+  ccall printf, szSaveDCDebug2, edi, esi
 
   mov [.bmih.biSize], sizeof.BITMAPINFOHEADER
   mov [.bmih.biWidth], edi
@@ -111,13 +116,14 @@ proc SaveDCToBitmap uses edi esi ebx, hWnd
   mov [.OldObj], eax
 
   ; BitBlt(hdc2, 0, 0, w, h, hdc1, 0, 0, SRCCOPY);
-  invoke BitBlt, [.hdc2], 0, 0, edi, esi, [.hdc1], 0, 0, SRCCOPY
+  mov eax, [.rc.left]
+  invoke BitBlt, [.hdc2], eax, [.rc.top], edi, esi, [.hdc1], 0, 0, SRCCOPY
 
   mov [.bmfh.bfOffBits], sizeof.BITMAPFILEHEADER + sizeof.BITMAPINFOHEADER
 
   mov eax, [.bmih.biHeight]
   imul eax, [.bmih.biWidth]
-  imul eax, 3 ; lea eax, [eax+eax*2]
+  lea eax, [eax+eax*2]
   add eax, sizeof.BITMAPFILEHEADER + sizeof.BITMAPINFOHEADER
   mov [.bmfh.bfSize], eax
 
@@ -375,6 +381,7 @@ proc WndProc uses edi esi ebx, hWnd, uMsg, wParam, lParam
   mov esi, edx
   and esi, 0xFFFF
   ; Положить в EDI ось Y
+  mov edi, edx
   shr edi, 0x10
 
   ;stdcall CreateChunkEx, esi, edi
@@ -569,6 +576,8 @@ proc EntryPoint
   mov [hInstance], eax
 
   invoke AllocConsole
+
+  invoke SetConsoleTitleA, szConsoleTitle
 
   invoke GetStdHandle, STD_OUTPUT_HANDLE
   mov [hStdOutput], eax
