@@ -17,6 +17,6 @@ library kernel32, 'kernel32.dll', \
 include 'api\kernel32.inc'
 include 'api\user32.inc'
 include 'api\gdi32.inc'
+include 'api\comdlg32.inc'
 
 import ntdll, vsprintf, 'vsprintf'
-import comdlg32, ChooseColor, 'ChooseColorA'

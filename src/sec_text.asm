@@ -8,8 +8,6 @@ include 'utils.asm'
 include 'chunks.asm'
 include 'console.asm'
 
-szFileName db 'C:\saved.bmp',0
-
 ; typedef struct tagBITMAPINFO {
 ;    BITMAPINFOHEADER    bmiHeader;
 ;    RGBQUAD             bmiColors[1];
@@ -22,10 +20,39 @@ struct RGBQUAD
   rgbReserved db ?
 ends
 
+struct OPENFILENAMEA
+  lStructSize       dd ?
+  hwndOwner         dd ?
+  hInstance         dd ?
+  lpstrFilter       dd ?
+  lpstrCustomFilter dd ?
+  nMaxCustFilter    dd ?
+  nFilterIndex      dd ?
+  lpstrFile         dd ?
+  nMaxFile          dd ?
+  lpstrFileTitle    dd ?
+  nMaxFileTitle     dd ?
+  lpstrInitialDir   dd ?
+  lpstrTitle        dd ?
+  Flags             dd ?
+  nFileOffset       dw ?
+  nFileExtension    dw ?
+  lpstrDefExt       dd ?
+  lCustData         dd ?
+  lpfnHook          dd ?
+  lpTemplateName    dd ?
+  pvReserved        dd ?
+  dwReserved        dd ?
+  FlagsEx           dd ?
+ends
+
 struct BITMAPINFO
   bmiHeader BITMAPINFOHEADER ?
   bmiColors RGBQUAD ?
 ends
+
+  szFileFilter db 'All Files (*.*)',0,"*.*",0,0
+  szBmp db 'bmp',0
 
 proc SaveDCToBitmap uses edi esi ebx, hWnd
   locals
@@ -38,6 +65,31 @@ proc SaveDCToBitmap uses edi esi ebx, hWnd
     .hdc2 dd ?
     .OldObj dd ?
   endl
+
+  locals
+    .ofd OPENFILENAMEA ? ; open file data
+    .szfn dd 260 dup(?)  ; file name
+  endl
+
+  lea edi, [.ofd]
+  stdcall memset, edi, 0, sizeof.OPENFILENAMEA
+  lea eax, [.szfn]
+  stdcall memset, eax, 0, 260
+
+  lea eax, [szFileFilter]
+  lea edx, [.szfn]
+  lea ecx, [szBmp]
+  mov [.ofd.lStructSize], sizeof.OPENFILENAMEA
+  mov [.ofd.hwndOwner], 0
+  mov [.ofd.lpstrFilter], eax
+  mov [.ofd.lpstrFile], edx
+  mov [.ofd.nMaxFile], 260
+  mov [.ofd.Flags], OFN_EXPLORER + OFN_FILEMUSTEXIST + OFN_HIDEREADONLY
+  mov [.ofd.lpstrDefExt], ecx
+
+  invoke GetSaveFileNameA, edi
+  test eax, eax
+  jz .EXIT
 
   lea eax, [.bmfh]
   stdcall memset, eax, 0, sizeof.BITMAPFILEHEADER
@@ -58,7 +110,7 @@ proc SaveDCToBitmap uses edi esi ebx, hWnd
   ccall printf, szSaveDCDebug1, [.rc.left], [.rc.right], [.rc.top], [.rc.bottom]
 
   lea eax, [.rc]
-  invoke AdjustWindowRect , eax, WS_CAPTION + WS_SYSMENU + WS_MINIMIZEBOX, FALSE
+  invoke AdjustWindowRect, eax, WS_CAPTION + WS_SYSMENU + WS_MINIMIZEBOX, FALSE
 
  ; w = rc.right-rc.left;
   mov eax, [.rc.right]
@@ -133,7 +185,7 @@ proc SaveDCToBitmap uses edi esi ebx, hWnd
   local .byteswritten dd ?
 
   ; fileHandle = CreateFile(pszFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-  lea eax, [szFileName]
+  lea eax, [.szfn]
   invoke CreateFileA, eax, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL
   mov [.f], eax
 
@@ -154,6 +206,10 @@ proc SaveDCToBitmap uses edi esi ebx, hWnd
   invoke DeleteDC, [.hdc2]
   invoke ReleaseDC, [hWnd], [.hdc1]
 
+  ret
+.EXIT:
+  lea eax, [szSaveNotSet]
+  ccall printf, eax
   ret
 endp
 

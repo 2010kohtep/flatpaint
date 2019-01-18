@@ -17,6 +17,7 @@ section '.const' data readable
 
   szSaveDCDebug1       db 'SaveDCToBitmap: Rectangle information retrieved; Left: %d, Right: %d, Top: %d, Bottom: %d',10,0
   szSaveDCDebug2       db 'SaveDCToBitmap: Width: %d, Height: %d',10,0
+  szSaveNotSet         db 'File name was not set or an internal error happened.',10,0
 
   szAboutHeader db 'About Box',0
   szAboutText   db 'FlatPaint - Paint, written in FASM.',10,10,'Alexander B. (c) 2018-2019',0
