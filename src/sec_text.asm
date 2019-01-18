@@ -112,7 +112,12 @@ proc SaveDCToBitmap uses edi esi ebx, hWnd
   lea eax, [.rc]
   invoke AdjustWindowRect, eax, WS_CAPTION + WS_SYSMENU + WS_MINIMIZEBOX, FALSE
 
- ; w = rc.right-rc.left;
+  sub [.rc.left],   8
+  sub [.rc.top],    32
+  sub [.rc.right],  8
+  sub [.rc.bottom], 8
+
+  ; w = rc.right-rc.left;
   mov eax, [.rc.right]
   sub eax, [.rc.left]
   mov edi, eax ; width
@@ -168,8 +173,7 @@ proc SaveDCToBitmap uses edi esi ebx, hWnd
   mov [.OldObj], eax
 
   ; BitBlt(hdc2, 0, 0, w, h, hdc1, 0, 0, SRCCOPY);
-  mov eax, [.rc.left]
-  invoke BitBlt, [.hdc2], eax, [.rc.top], edi, esi, [.hdc1], 0, 0, SRCCOPY
+  invoke BitBlt, [.hdc2], [.rc.left], [.rc.top], edi, esi, [.hdc1], 0, 0, SRCCOPY
 
   mov [.bmfh.bfOffBits], sizeof.BITMAPFILEHEADER + sizeof.BITMAPINFOHEADER
 
@@ -208,8 +212,9 @@ proc SaveDCToBitmap uses edi esi ebx, hWnd
 
   ret
 .EXIT:
-  lea eax, [szSaveNotSet]
-  ccall printf, eax
+  invoke GetLastError
+  lea edx, [szSaveNotSet]
+  ccall printf, edx, eax
   ret
 endp
 
