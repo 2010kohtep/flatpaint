@@ -1,5 +1,5 @@
-;
-; Секция кода
+п»ї;
+; РЎРµРєС†РёСЏ РєРѕРґР°
 ;
 
 section '.text' code readable executable
@@ -277,12 +277,12 @@ proc WritePixel uses edi esi ebx, hdc, chunk, size
   je .EXIT
 
   locals
-    .left dd ?      ; Количество линий, которое осталось пройти
+    .left dd ?      ; РљРѕР»РёС‡РµСЃС‚РІРѕ Р»РёРЅРёР№, РєРѕС‚РѕСЂРѕРµ РѕСЃС‚Р°Р»РѕСЃСЊ РїСЂРѕР№С‚Рё
   endl
 
   mov eax, [size]
   mov edx, [.chunk.x]
-  lea ebx, [eax + edx] ; Последний X пиксель, достигнув которого мы должны спуститься на один пиксель ниже
+  lea ebx, [eax + edx] ; РџРѕСЃР»РµРґРЅРёР№ X РїРёРєСЃРµР»СЊ, РґРѕСЃС‚РёРіРЅСѓРІ РєРѕС‚РѕСЂРѕРіРѕ РјС‹ РґРѕР»Р¶РЅС‹ СЃРїСѓСЃС‚РёС‚СЊСЃСЏ РЅР° РѕРґРёРЅ РїРёРєСЃРµР»СЊ РЅРёР¶Рµ
 
   mov eax, [size]
   mov [.left], eax
@@ -350,7 +350,7 @@ proc Paint uses edi esi ebx, hWnd
   invoke SetPixel, [hdc], [.chunk.x], [.chunk.y], [.chunk.color]
 
 .DONT_DRAW:
-  mov ebx, edi ; Предыдущий чанк
+  mov ebx, edi ; РџСЂРµРґС‹РґСѓС‰РёР№ С‡Р°РЅРє
 
   add edi, sizeof.drawchunk_t
 
@@ -430,17 +430,17 @@ proc WndProc uses edi esi ebx, hWnd, uMsg, wParam, lParam
 .WM_LBUTTONDOWN:
   mov ecx, [wParam]
   test ecx, MK_LBUTTON
-    jz .EXIT ; Покинуть обработчик, если ЛКМ не нажата
+    jz .EXIT ; РџРѕРєРёРЅСѓС‚СЊ РѕР±СЂР°Р±РѕС‚С‡РёРє, РµСЃР»Рё Р›РљРњ РЅРµ РЅР°Р¶Р°С‚Р°
 
   cmp eax, WM_MOUSEMOVE
   sete bl
 
-  ; Положить в ECX координаты точки
+  ; РџРѕР»РѕР¶РёС‚СЊ РІ ECX РєРѕРѕСЂРґРёРЅР°С‚С‹ С‚РѕС‡РєРё
   mov edx, [lParam]
-  ; Положить в ESI ось X
+  ; РџРѕР»РѕР¶РёС‚СЊ РІ ESI РѕСЃСЊ X
   mov esi, edx
   and esi, 0xFFFF
-  ; Положить в EDI ось Y
+  ; РџРѕР»РѕР¶РёС‚СЊ РІ EDI РѕСЃСЊ Y
   mov edi, edx
   shr edi, 0x10
 
@@ -449,7 +449,7 @@ proc WndProc uses edi esi ebx, hWnd, uMsg, wParam, lParam
   test eax, eax
     jnz .CHUNK_CREATED
 
-   ; Не удалось получить свободный чанк, выход
+   ; РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ СЃРІРѕР±РѕРґРЅС‹Р№ С‡Р°РЅРє, РІС‹С…РѕРґ
    ccall printf, szOutOfChunks
    jmp .EXIT
 
@@ -525,14 +525,14 @@ proc WndProc uses edi esi ebx, hWnd, uMsg, wParam, lParam
 
 ;.WM_MENUSELECT:
 ;
-;  ; Положить в ECX дескриптор меню, по которому щёлкнули мышью
+;  ; РџРѕР»РѕР¶РёС‚СЊ РІ ECX РґРµСЃРєСЂРёРїС‚РѕСЂ РјРµРЅСЋ, РїРѕ РєРѕС‚РѕСЂРѕРјСѓ С‰С‘Р»РєРЅСѓР»Рё РјС‹С€СЊСЋ
 ;  mov ecx, [lParam]
 ;
 ;  mov eax, [wParam]
-;  ; Положить в EDX пункт меню или индекс подменю
+;  ; РџРѕР»РѕР¶РёС‚СЊ РІ EDX РїСѓРЅРєС‚ РјРµРЅСЋ РёР»Рё РёРЅРґРµРєСЃ РїРѕРґРјРµРЅСЋ
 ;  mov edx, eax
 ;  and edx, 0xFFFF
-;  ; Положить в EAX флаги меню
+;  ; РџРѕР»РѕР¶РёС‚СЊ РІ EAX С„Р»Р°РіРё РјРµРЅСЋ
 ;  shr eax, 0x10
 ;
 ;  ccall printf, szMenuSelectDebug, edx, eax, ecx
@@ -556,11 +556,11 @@ proc BuildMenu, hWnd
     hPopMenuView dd ?
   endl
 
-  ; Создание "основы" меню (места, где располагаются первичные кнопки)
+  ; РЎРѕР·РґР°РЅРёРµ "РѕСЃРЅРѕРІС‹" РјРµРЅСЋ (РјРµСЃС‚Р°, РіРґРµ СЂР°СЃРїРѕР»Р°РіР°СЋС‚СЃСЏ РїРµСЂРІРёС‡РЅС‹Рµ РєРЅРѕРїРєРё)
   invoke CreateMenu
   mov [hMainMenu], eax
 
-  ; Создание подменю для кнопок
+  ; РЎРѕР·РґР°РЅРёРµ РїРѕРґРјРµРЅСЋ РґР»СЏ РєРЅРѕРїРѕРє
   invoke CreatePopupMenu
   mov [hPopMenuFile], eax
   invoke CreatePopupMenu
@@ -568,7 +568,7 @@ proc BuildMenu, hWnd
   invoke CreatePopupMenu
   mov [hPopMenuView], eax
 
-  ; Создание кнопок меню и подменю
+  ; РЎРѕР·РґР°РЅРёРµ РєРЅРѕРїРѕРє РјРµРЅСЋ Рё РїРѕРґРјРµРЅСЋ
   invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuFile], szFile
     invoke AppendMenu, [hPopMenuFile], MF_STRING,    0x1000, szNew
     invoke AppendMenu, [hPopMenuFile], MF_STRING,    0x1001, szOpen
@@ -582,21 +582,21 @@ proc BuildMenu, hWnd
   ;invoke AppendMenu, [hMainMenu], MF_STRING + MF_POPUP, [hPopMenuView], szView
   invoke AppendMenu, [hMainMenu], MF_STRING, 0x3000, szAbout
 
-  ; Привязка меню к окну
+  ; РџСЂРёРІСЏР·РєР° РјРµРЅСЋ Рє РѕРєРЅСѓ
   invoke SetMenu, [hWnd], [hMainMenu]
 
   ret
 endp
 
-; Результат - ATOM зарегистрированного класса
+; Р РµР·СѓР»СЊС‚Р°С‚ - ATOM Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅРЅРѕРіРѕ РєР»Р°СЃСЃР°
 proc CreateWindowClass
-  ; Добавить переменную 'class' на стеке
+  ; Р”РѕР±Р°РІРёС‚СЊ РїРµСЂРµРјРµРЅРЅСѓСЋ 'class' РЅР° СЃС‚РµРєРµ
   local .class WNDCLASSEX
 
-  ; Положить указатель на переменную 'class' в регистр ebx
+  ; РџРѕР»РѕР¶РёС‚СЊ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РїРµСЂРµРјРµРЅРЅСѓСЋ 'class' РІ СЂРµРіРёСЃС‚СЂ ebx
   lea eax, [.class]
 
-  ; Занулить переменную 'class'
+  ; Р—Р°РЅСѓР»РёС‚СЊ РїРµСЂРµРјРµРЅРЅСѓСЋ 'class'
   stdcall memset, eax, 0, sizeof.WNDCLASS
 
   mov eax, [hInstance]
@@ -618,7 +618,7 @@ proc CreateWindowClass
   invoke CreateSolidBrush, 0xFFFFFF
   mov [.class.hbrBackground], eax
 
-  ; Регистрация класса
+  ; Р РµРіРёСЃС‚СЂР°С†РёСЏ РєР»Р°СЃСЃР°
   lea eax, [.class]
   invoke RegisterClassEx, eax
 
@@ -644,7 +644,7 @@ proc EntryPoint
 
   call CreateWindowClass
   test eax, eax
-  jz .EXIT ; TODO: Сообщение об ошибке
+  jz .EXIT ; TODO: РЎРѕРѕР±С‰РµРЅРёРµ РѕР± РѕС€РёР±РєРµ
 
   invoke CreateWindowEx,\
     WS_EX_OVERLAPPEDWINDOW,\ ; ExtStyle
@@ -660,7 +660,7 @@ proc EntryPoint
     [hInstance],\ ; hInstance
     0             ; lParam
 
-  ; Сохраняем в edi хендл созданного окна
+  ; РЎРѕС…СЂР°РЅСЏРµРј РІ edi С…РµРЅРґР» СЃРѕР·РґР°РЅРЅРѕРіРѕ РѕРєРЅР°
   push edi
   mov edi, eax
 

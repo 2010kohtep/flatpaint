@@ -1,4 +1,4 @@
-; Секция константных данных
+п»ї; РЎРµРєС†РёСЏ РєРѕРЅСЃС‚Р°РЅС‚РЅС‹С… РґР°РЅРЅС‹С…
 
 section '.const' data readable
 
@@ -26,14 +26,14 @@ section '.const' data readable
   szBmp db 'bmp',0
 
   ;
-  ; Переменные окна программы
+  ; РџРµСЂРµРјРµРЅРЅС‹Рµ РѕРєРЅР° РїСЂРѕРіСЂР°РјРјС‹
   ;
 
   szClassName db 'CustomClass001',0
   szWndName   db 'flatpaint',0
 
   ;
-  ; Переменные меню программы
+  ; РџРµСЂРµРјРµРЅРЅС‹Рµ РјРµРЅСЋ РїСЂРѕРіСЂР°РјРјС‹
   ;
 
   szFile  db 'File', 0
@@ -41,15 +41,15 @@ section '.const' data readable
   szView  db 'View', 0
   szAbout db 'About', 0
 
-  ; Элементы подменю File
+  ; Р­Р»РµРјРµРЅС‚С‹ РїРѕРґРјРµРЅСЋ File
   szOpen db 'Open', 0
   szNew  db 'New', 0
   szSave db 'Save as...', 0
   szExit db 'Exit', 0
 
-  ; Элементы подменю Edit
+  ; Р­Р»РµРјРµРЅС‚С‹ РїРѕРґРјРµРЅСЋ Edit
   szUndo db 'Undo', 0
   szSetColor db 'Choose color', 0
 
-  ; Элементы подменю View
+  ; Р­Р»РµРјРµРЅС‚С‹ РїРѕРґРјРµРЅСЋ View
   ; ...
