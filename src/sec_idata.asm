@@ -1,10 +1,10 @@
-;
-; Секция импорта
+п»ї;
+; РЎРµРєС†РёСЏ РёРјРїРѕСЂС‚Р°
 ;
 
 section '.idata' import data readable
 
-; Подключить набор библиотек
+; РџРѕРґРєР»СЋС‡РёС‚СЊ РЅР°Р±РѕСЂ Р±РёР±Р»РёРѕС‚РµРє
 
 library kernel32, 'kernel32.dll', \
         user32,   'user32.dll',\
@@ -12,7 +12,7 @@ library kernel32, 'kernel32.dll', \
         ntdll,    'ntdll.dll',\
         comdlg32, 'comdlg32.dll'
 
-; Подключить набор функций
+; РџРѕРґРєР»СЋС‡РёС‚СЊ РЅР°Р±РѕСЂ С„СѓРЅРєС†РёР№
 
 include 'api\kernel32.inc'
 include 'api\user32.inc'
