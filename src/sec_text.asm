@@ -51,9 +51,6 @@ struct BITMAPINFO
   bmiColors RGBQUAD ?
 ends
 
-  szFileFilter db 'All Files (*.*)',0,"*.*",0,0
-  szBmp db 'bmp',0
-
 proc SaveDCToBitmap uses edi esi ebx, hWnd
   locals
     .bmfh BITMAPFILEHEADER ?
@@ -120,12 +117,12 @@ proc SaveDCToBitmap uses edi esi ebx, hWnd
   ; w = rc.right-rc.left;
   mov eax, [.rc.right]
   sub eax, [.rc.left]
-  mov edi, eax ; width
+  mov edi, eax ; width (cx)
 
   ; h = rc.bottom-rc.top;
   mov eax, [.rc.bottom]
   sub eax, [.rc.top]
-  mov esi, eax ; height
+  mov esi, eax ; height (cy)
 
   ccall printf, szSaveDCDebug2, edi, esi
 
@@ -153,6 +150,7 @@ proc SaveDCToBitmap uses edi esi ebx, hWnd
   shr eax, 3
   ; ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3) * bmih.biHeight
   imul eax, esi
+
   ; bmih.biSizeImage = ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3) * bmih.biHeight;
   mov [.bmih.biSizeImage], eax
 
@@ -173,7 +171,8 @@ proc SaveDCToBitmap uses edi esi ebx, hWnd
   mov [.OldObj], eax
 
   ; BitBlt(hdc2, 0, 0, w, h, hdc1, 0, 0, SRCCOPY);
-  invoke BitBlt, [.hdc2], [.rc.left], [.rc.top], edi, esi, [.hdc1], 0, 0, SRCCOPY
+  ; invoke BitBlt, [.hdc2], [.rc.left], [.rc.top], edi, esi, [.hdc1], 0, 0, SRCCOPY
+  invoke BitBlt, [.hdc2], 0, 0, edi, esi, [.hdc1], 0, 0, SRCCOPY
 
   mov [.bmfh.bfOffBits], sizeof.BITMAPFILEHEADER + sizeof.BITMAPINFOHEADER
 

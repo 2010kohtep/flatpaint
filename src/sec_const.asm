@@ -22,6 +22,9 @@ section '.const' data readable
   szAboutHeader db 'About Box',0
   szAboutText   db 'FlatPaint - Paint, written in FASM.',10,10,'Alexander B. (c) 2018-2019',0
 
+  szFileFilter db 'All Files (*.*)',0,"*.*",0,0
+  szBmp db 'bmp',0
+
   ;
   ; ѕеременные окна программы
   ;
@@ -41,7 +44,7 @@ section '.const' data readable
   ; Ёлементы подменю File
   szOpen db 'Open', 0
   szNew  db 'New', 0
-  szSave db 'Save', 0
+  szSave db 'Save as...', 0
   szExit db 'Exit', 0
 
   ; Ёлементы подменю Edit
